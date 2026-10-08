@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://www.isoloom.com/schema/v1.json
+# OWASP WebGoatPHP (by Abbas Naderi, Johanna Curiel, Shivam Dixit and contributors) as an Isoloom
+# spec: the upstream PHP source, vendored unchanged in build/web/app/, served by a PHP 5.6 /
+# Apache image we wrote (upstream ships a Vagrant box, no Dockerfile), and a MariaDB machine. The
+# image imports upstream's database at first start. `isoloom generate`, then `isoloom up docker`.
+version: 1
+name: webgoat-php
+
+networks:
+  lab: { cidr: 10.60.31.0/24, internet: false }
+
+machines:
+  db:
+    networks: { lab: 20 }
+    services: [{ port: 3306, name: mariadb }]
+    resources: { cpus: 1, memory_mb: 512 }
+    volumes: { data: /var/lib/mysql }
+    docker:
+      build: build/db
+
+  web:
+    networks: { lab: 10 }
+    services: [{ port: 80, name: web, http: true, publish: 8031 }]
+    resources: { cpus: 1, memory_mb: 512 }
+    depends_on: [db]
+    docker:
+      build: build/web
+
+checks:
+  - name: WebGoatPHP answers
+    http: http://web/
+    wait: 180
+  - name: guest / guest logs in (the database is imported)
+    script: checks/login.sh
+    wait: 90
+  - name: the lesson pages are served
+    http: http://web/mode/single/challenges/
+    expect: any
+
+message: |
+  WebGoatPHP answers at http://localhost:{{ machines.web.services.0.publish }}/. Log in as
+  guest / guest and choose single-user mode; each lesson has hints, a plan and a solution.

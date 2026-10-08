@@ -1,0 +1,224 @@
+{
+  "generated_by_isoloom": "from isoloom.yml; don't edit: change the spec and run `isoloom generate` (`isoloom check` fails when this file is out of date)",
+  "resolved_version": 1,
+  "name": "webgoat-php",
+  "instance": null,
+  "inputs": [],
+  "networks": {
+    "lab": {
+      "cidr": "10.60.31.0/24",
+      "docker_cidr": "10.60.31.0/24",
+      "internet": false,
+      "gateway": null,
+      "gateway_address": "10.60.31.1",
+      "router": null,
+      "controller": "10.60.31.253"
+    }
+  },
+  "reach": [],
+  "machines": {
+    "db": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.60.31.20"
+      },
+      "docker_addresses": {
+        "lab": "10.60.31.20"
+      },
+      "services": [
+        {
+          "port": 3306,
+          "name": "mariadb",
+          "http": false,
+          "publish": null
+        }
+      ],
+      "depends_on": [],
+      "inputs": [],
+      "volumes": {
+        "data": "/var/lib/mysql"
+      },
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    },
+    "web": {
+      "access": false,
+      "supplied": false,
+      "shapes": [
+        "docker"
+      ],
+      "arch": "amd64",
+      "os": null,
+      "windows": false,
+      "addresses": {
+        "lab": "10.60.31.10"
+      },
+      "docker_addresses": {
+        "lab": "10.60.31.10"
+      },
+      "services": [
+        {
+          "port": 80,
+          "name": "web",
+          "http": true,
+          "publish": 8031
+        }
+      ],
+      "depends_on": [
+        "db"
+      ],
+      "inputs": [],
+      "volumes": {},
+      "resources": {
+        "cpus": 1,
+        "memory_mb": 512,
+        "disk_gb": 20
+      },
+      "gateway_of": [],
+      "routes": [],
+      "default_gateway": null,
+      "offline": true
+    }
+  },
+  "start_order": [
+    "db",
+    "web"
+  ],
+  "clones": {},
+  "tools": {},
+  "groups": {},
+  "router": null,
+  "controller": {
+    "addresses": {
+      "lab": "10.60.31.253"
+    }
+  },
+  "published": [
+    {
+      "machine": "web",
+      "port": 80,
+      "host_port": 8031
+    }
+  ],
+  "targets": {
+    "possible": [
+      "docker",
+      "hosted",
+      "docker-vm",
+      "cloud-docker",
+      "kubernetes"
+    ],
+    "generated": [
+      "docker",
+      "hosted",
+      "docker-vm",
+      "cloud-docker",
+      "kubernetes"
+    ],
+    "refused": {},
+    "not_possible": {
+      "hybrid": "only when some machines are containers and others are VMs",
+      "vagrant": "needs `vm:` on db, web",
+      "proxmox": "needs `vm:` on db, web",
+      "cloud-vm": "needs `vm:` on db, web",
+      "external": "needs `external:` on db, web"
+    }
+  },
+  "checks": {
+    "default_position": "networks",
+    "positions": [
+      {
+        "position": "networks",
+        "machine": null,
+        "runner": "isoloom-check",
+        "checks": [
+          {
+            "name": "WebGoatPHP answers",
+            "derived": false,
+            "kind": "http",
+            "target": "http://web/",
+            "expect": "200",
+            "wait": 180
+          },
+          {
+            "name": "guest / guest logs in (the database is imported)",
+            "derived": false,
+            "kind": "script",
+            "target": "checks/login.sh",
+            "expect": "",
+            "wait": 90
+          },
+          {
+            "name": "the lesson pages are served",
+            "derived": false,
+            "kind": "http",
+            "target": "http://web/mode/single/challenges/",
+            "expect": "any",
+            "wait": 30
+          }
+        ]
+      },
+      {
+        "position": "db",
+        "machine": "db",
+        "runner": "isoloom-check-db",
+        "checks": [
+          {
+            "name": "web:80 from db",
+            "derived": true,
+            "kind": "http",
+            "target": "http://10.60.31.10:80/",
+            "expect": "any",
+            "wait": 30
+          },
+          {
+            "name": "no internet from db",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      },
+      {
+        "position": "web",
+        "machine": "web",
+        "runner": "isoloom-check-web",
+        "checks": [
+          {
+            "name": "db:3306 from web",
+            "derived": true,
+            "kind": "tcp",
+            "target": "10.60.31.20:3306",
+            "expect": "open",
+            "wait": 30
+          },
+          {
+            "name": "no internet from web",
+            "derived": true,
+            "kind": "http",
+            "target": "http://1.1.1.1/",
+            "expect": "blocked",
+            "wait": 0
+          }
+        ]
+      }
+    ]
+  },
+  "message": "WebGoatPHP answers at http://localhost:8031/. Log in as\nguest / guest and choose single-user mode; each lesson has hints, a plan and a solution.\n"
+}
