@@ -17,7 +17,7 @@ ships a Vagrant box, no Dockerfile), with its database imported at first start.
 
 ```bash
 isoloom generate
-isoloom up docker
+isoloom run docker
 ```
 
 Then open http://localhost:8031/, log in as `guest` / `guest` and start single-user mode. The
