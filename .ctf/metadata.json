@@ -4,6 +4,5 @@
   "question": "Complete the WebGoatPHP lessons in single-user mode.",
   "category": "WEB",
   "difficulty": 1,
-  "evidence_kind": "SECRET",
-  "capabilities": ["sql-injection", "cross-site-scripting", "broken-access-control", "broken-authentication", "http-basics"]
+  "evidence_kind": "SECRET"
 }
